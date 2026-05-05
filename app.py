@@ -4,12 +4,63 @@ import yt_dlp
 import uuid
 import os
 import json
+from pathlib import Path
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 DOWNLOADS_DIR = "downloads"
 os.makedirs(DOWNLOADS_DIR, exist_ok=True)
+
+# 🔥 CONFIGURAÇÃO DOS COOKIES (CRIA O ARQUIVO SE NÃO EXISTIR)
+COOKIES_FILE = "/tmp/youtube_cookies.txt"
+
+def setup_cookies_file():
+    """Cria um arquivo de cookies se não existir"""
+    if not os.path.exists(COOKIES_FILE):
+        with open(COOKIES_FILE, 'w') as f:
+            f.write("# Netscape HTTP Cookie File\n")
+            f.write("www.youtube.com\tTRUE\t/\tTRUE\t0\tVISITOR_INFO1_LIVE\tseu_valor_aqui\n")
+        os.chmod(COOKIES_FILE, 0o644)
+
+setup_cookies_file()
+
+# 🔥 OPÇÕES AVANÇADAS PARA BURLAR BLOQUEIO
+def get_ytdl_opts(download: bool = False, is_audio: bool = False, filepath: str = None):
+    opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'extract_flat': not download,
+        'cookiefile': COOKIES_FILE,
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'web'],
+                'skip': ['hls', 'dash']
+            }
+        },
+        'http_headers': {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-us,en;q=0.5',
+            'Sec-Fetch-Mode': 'navigate',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+    }
+    
+    if download:
+        opts['outtmpl'] = filepath
+        opts['extract_flat'] = False
+        
+        if is_audio:
+            opts['format'] = 'bestaudio/best'
+            opts['postprocessors'] = [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+            }]
+        else:
+            opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+    
+    return opts
 
 @app.route('/info', methods=['POST', 'OPTIONS'])
 def get_info():
@@ -25,12 +76,7 @@ def get_info():
         if not url:
             return jsonify({'error': 'URL nao fornecida'}), 400
         
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'extract_flat': True,
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        ydl_opts = get_ytdl_opts(download=False)
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -63,21 +109,7 @@ def download():
         filename = f"{uid}.{'mp3' if is_audio else 'mp4'}"
         filepath = os.path.join(DOWNLOADS_DIR, filename)
         
-        ydl_opts = {
-            'outtmpl': filepath,
-            'quiet': True,
-            'no_warnings': True,
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        
-        if is_audio:
-            ydl_opts['format'] = 'bestaudio/best'
-            ydl_opts['postprocessors'] = [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-            }]
-        else:
-            ydl_opts['format'] = 'best[ext=mp4]/best'
+        ydl_opts = get_ytdl_opts(download=True, is_audio=is_audio, filepath=filepath)
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.extract_info(url, download=True)
@@ -90,7 +122,8 @@ def download():
 def home():
     return jsonify({
         "status": "API Online!",
-        "mensagem": "Use POST em /info com {\\"url\\": \\"link_do_video\\"} para obter informações"
+        "mensagem": "Use POST em /info com {\"url\": \"link_do_video\"} para obter informações",
+        "cookies_status": "Cookies configurados para bypass"
     })
 
 if __name__ == '__main__':
