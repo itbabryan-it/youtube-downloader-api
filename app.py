@@ -10,28 +10,16 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 DOWNLOADS_DIR = "downloads"
 os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
-# 🔥 CONFIGURAÇÃO DOS COOKIES
-COOKIES_FILE = "/tmp/youtube_cookies.txt"
-
-def setup_cookies_file():
-    if not os.path.exists(COOKIES_FILE):
-        with open(COOKIES_FILE, 'w') as f:
-            f.write("# Netscape HTTP Cookie File\n")
-            f.write("www.youtube.com\tTRUE\t/\tTRUE\t0\tVISITOR_INFO1_LIVE\tK4pI-1MkDOs\n")
-        os.chmod(COOKIES_FILE, 0o644)
-
-setup_cookies_file()
-
 def get_ytdl_opts(download: bool = False, is_audio: bool = False, filepath: str = None):
     opts = {
         'quiet': True,
         'no_warnings': True,
         'extract_flat': not download,
-        'cookiefile': COOKIES_FILE,
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'extractor_args': {
             'youtube': {
                 'player_client': ['android', 'web'],
+                'skip': ['hls', 'dash']
             }
         }
     }
