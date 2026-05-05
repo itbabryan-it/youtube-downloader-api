@@ -19,7 +19,7 @@ def setup_cookies_file():
     if not os.path.exists(COOKIES_FILE):
         with open(COOKIES_FILE, 'w') as f:
             f.write("# Netscape HTTP Cookie File\n")
-            f.write("www.youtube.com\tTRUE\t/\tTRUE\t0\tVISITOR_INFO1_LIVE\tSEU_COOKIE_AQUI\n")
+            f.write("www.youtube.com\tTRUE\t/\tTRUE\t0\tVISITOR_INFO1_LIVE\tK4pI-1MkDOs\n")
         os.chmod(COOKIES_FILE, 0o644)
 
 setup_cookies_file()
