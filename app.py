@@ -64,7 +64,7 @@ def get_ytdl_opts(download: bool = False, is_audio: bool = False, filepath: str 
 def home():
     return jsonify({
         "status": "API Online!",
-        "mensagem": "Use POST em /info com {\\"url\\": \\"link_do_video\\"} para obter informações"
+        "mensagem": "Use POST em /info com {\"url\": \"link_do_video\"} para obter informações"
     })
 
 @app.route('/info', methods=['POST', 'OPTIONS'])
