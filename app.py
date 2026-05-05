@@ -12,20 +12,18 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 DOWNLOADS_DIR = "downloads"
 os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
-# 🔥 CONFIGURAÇÃO DOS COOKIES (CRIA O ARQUIVO SE NÃO EXISTIR)
+# 🔥 CONFIGURAÇÃO DOS COOKIES
 COOKIES_FILE = "/tmp/youtube_cookies.txt"
 
 def setup_cookies_file():
-    """Cria um arquivo de cookies se não existir"""
     if not os.path.exists(COOKIES_FILE):
         with open(COOKIES_FILE, 'w') as f:
             f.write("# Netscape HTTP Cookie File\n")
-            f.write("www.youtube.com\tTRUE\t/\tTRUE\t0\tVISITOR_INFO1_LIVE\tseu_valor_aqui\n")
+            f.write("www.youtube.com\tTRUE\t/\tTRUE\t0\tVISITOR_INFO1_LIVE\tSEU_COOKIE_AQUI\n")
         os.chmod(COOKIES_FILE, 0o644)
 
 setup_cookies_file()
 
-# 🔥 OPÇÕES AVANÇADAS PARA BURLAR BLOQUEIO
 def get_ytdl_opts(download: bool = False, is_audio: bool = False, filepath: str = None):
     opts = {
         'quiet': True,
@@ -61,6 +59,13 @@ def get_ytdl_opts(download: bool = False, is_audio: bool = False, filepath: str 
             opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
     
     return opts
+
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({
+        "status": "API Online!",
+        "mensagem": "Use POST em /info com {\\"url\\": \\"link_do_video\\"} para obter informações"
+    })
 
 @app.route('/info', methods=['POST', 'OPTIONS'])
 def get_info():
@@ -117,14 +122,6 @@ def download():
         return send_file(filepath, as_attachment=True, download_name=filename)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-@app.route('/')
-def home():
-    return jsonify({
-        "status": "API Online!",
-        "mensagem": "Use POST em /info com {\"url\": \"link_do_video\"} para obter informações",
-        "cookies_status": "Cookies configurados para bypass"
-    })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
