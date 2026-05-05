@@ -5,15 +5,15 @@ import uuid
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 DOWNLOADS_DIR = "downloads"
 os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
-@app.route('/info', methods=['POST', 'GET'])
+@app.route('/info', methods=['POST', 'OPTIONS'])
 def get_info():
-    if request.method == 'GET':
-        return jsonify({'status': 'API funcionando! Use POST com {"url": "link"}'})
+    if request.method == 'OPTIONS':
+        return '', 200
     
     try:
         data = request.get_json()
@@ -39,15 +39,15 @@ def get_info():
     except Exception as e:
         return jsonify({'error': str(e), 'success': False}), 500
 
-@app.route('/download', methods=['POST'])
+@app.route('/download', methods=['POST', 'OPTIONS'])
 def download():
+    if request.method == 'OPTIONS':
+        return '', 200
+    
     try:
         data = request.get_json()
         url = data.get('url')
         is_audio = data.get('is_audio', False)
-        
-        if not url:
-            return jsonify({'error': 'URL nao fornecida'}), 400
         
         uid = uuid.uuid4().hex
         filename = f"{uid}.{'mp3' if is_audio else 'mp4'}"
