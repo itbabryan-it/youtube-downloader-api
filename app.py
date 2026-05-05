@@ -3,8 +3,6 @@ from flask_cors import CORS
 import yt_dlp
 import uuid
 import os
-import json
-from pathlib import Path
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -30,18 +28,11 @@ def get_ytdl_opts(download: bool = False, is_audio: bool = False, filepath: str 
         'no_warnings': True,
         'extract_flat': not download,
         'cookiefile': COOKIES_FILE,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'extractor_args': {
             'youtube': {
                 'player_client': ['android', 'web'],
-                'skip': ['hls', 'dash']
             }
-        },
-        'http_headers': {
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-us,en;q=0.5',
-            'Sec-Fetch-Mode': 'navigate',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
     }
     
@@ -56,7 +47,7 @@ def get_ytdl_opts(download: bool = False, is_audio: bool = False, filepath: str 
                 'preferredcodec': 'mp3',
             }]
         else:
-            opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+            opts['format'] = 'best[ext=mp4]/best'
     
     return opts
 
@@ -64,7 +55,7 @@ def get_ytdl_opts(download: bool = False, is_audio: bool = False, filepath: str 
 def home():
     return jsonify({
         "status": "API Online!",
-        "mensagem": "Use POST em /info com {\"url\": \"link_do_video\"} para obter informações"
+        "mensagem": 'Use POST em /info com {"url": "link_do_video"} para obter informações'
     })
 
 @app.route('/info', methods=['POST', 'OPTIONS'])
