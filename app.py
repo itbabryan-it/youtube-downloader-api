@@ -3,6 +3,7 @@ from flask_cors import CORS
 import yt_dlp
 import uuid
 import os
+import json
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -17,15 +18,18 @@ def get_info():
     
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Invalid JSON'}), 400
+            
         url = data.get('url')
-        
         if not url:
             return jsonify({'error': 'URL nao fornecida'}), 400
         
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
-            'extract_flat': True
+            'extract_flat': True,
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -46,7 +50,13 @@ def download():
     
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Invalid JSON'}), 400
+            
         url = data.get('url')
+        if not url:
+            return jsonify({'error': 'URL nao fornecida'}), 400
+            
         is_audio = data.get('is_audio', False)
         
         uid = uuid.uuid4().hex
@@ -57,6 +67,7 @@ def download():
             'outtmpl': filepath,
             'quiet': True,
             'no_warnings': True,
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         
         if is_audio:
